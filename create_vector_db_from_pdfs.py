@@ -41,5 +41,5 @@ def create_vector_db_from_pdfs(pdf_paths, output_path="faiss_store_pdfs.pkl"):
 # Example usage
 if __name__ == "__main__":
     # Replace with your local PDF file paths
-    pdf_files = ["./sample1.pdf", "./sample2.pdf"]
+    pdf_files = ["./sample.pdf"]
     create_vector_db_from_pdfs(pdf_files)
