@@ -18,7 +18,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 if not GOOGLE_API_KEY:
     print("⚠️ Warning: GOOGLE_API_KEY not found in environment, using fallback key.")
-    GOOGLE_API_KEY = "AIzaSyD9w3px2DodR-4p4LKzqww4B-bBO-EZxlg"  # Replace with your real key or env var
+    GOOGLE_API_KEY = ""  # Replace with your real key or env var
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash-002",
