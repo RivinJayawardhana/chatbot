@@ -5,22 +5,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatInput = document.querySelector(".chat-input textarea");
     const sendChatBtn = document.querySelector(".chat-input span");
 
-    let userMessage = null; // Variable to store user's message
-    const API_KEY = "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"; // Paste your API key here
+    let userMessage = null;
     const inputInitHeight = chatInput.scrollHeight;
 
+    const API_URL = "http://localhost:5000/ask"; // Your Flask API URL
+
     const createChatLi = (message, className) => {
-        // Create a chat <li> element with passed message and className
         const chatLi = document.createElement("li");
         chatLi.classList.add("chat", `${className}`);
         let chatContent = className === "outgoing" ? `<p></p>` : `<span class="material-symbols-outlined">smart_toy</span><p></p>`;
         chatLi.innerHTML = chatContent;
         chatLi.querySelector("p").textContent = message;
-        return chatLi; // return chat <li> element
+        return chatLi;
     }
 
+    // Optional client-side company check (can remove if backend fully handles)
     const companyKeywords = ["kmtec ltd"];
-
     const isCompanyRelated = (query) => {
         query = query.toLowerCase();
         for (const keyword of companyKeywords) {
@@ -31,51 +31,51 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
     };
 
-    const generateResponse = (chatElement) => {
-        const API_URL = "https://api.openai.com/v1/chat/completions";
+    const generateResponse = async (chatElement) => {
         const messageElement = chatElement.querySelector("p");
 
+        // Optional quick client-side filter; comment out if backend handles it:
+        /*
         if (!isCompanyRelated(userMessage)) {
-            messageElement.textContent = "I'm sorry, I can only answer questions related to our company.";
+            messageElement.textContent = "Please ask company related questions only.";
             return;
         }
+        */
 
-        // Define the properties and message for the API request
-        const requestOptions = {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${API_KEY}`
-            },
-            body: JSON.stringify({
-                "model": "ft:gpt-3.5-turbo-0125:kmtec:kmtechbot:9b045Wsb",
-                "messages": [{"role": "user", "content": userMessage}],
-            })
-        }
-
-        // Send POST request to API, get response and set the response as paragraph text
-        fetch(API_URL, requestOptions).then(res => res.json()).then(data => {
-            messageElement.textContent = data.choices[0].message.content.trim();
-        }).catch(() => {
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ question: userMessage })
+            });
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            const data = await response.json();
+            // Expect data.answer from your Flask API
+            messageElement.textContent = data.answer || "I don't know.";
+        } catch (error) {
             messageElement.classList.add("error");
             messageElement.textContent = "Oops! Something went wrong. Please try again.";
-        }).finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
+            console.error(error);
+        } finally {
+            chatbox.scrollTo(0, chatbox.scrollHeight);
+        }
     }
 
     const handleChat = () => {
-        userMessage = chatInput.value.trim(); // Get user entered message and remove extra whitespace
+        userMessage = chatInput.value.trim();
         if (!userMessage) return;
 
-        // Clear the input textarea and set its height to default
         chatInput.value = "";
         chatInput.style.height = `${inputInitHeight}px`;
 
-        // Append the user's message to the chatbox
         chatbox.appendChild(createChatLi(userMessage, "outgoing"));
         chatbox.scrollTo(0, chatbox.scrollHeight);
-        
+
         setTimeout(() => {
-            // Display "Thinking..." message while waiting for the response
             const incomingChatLi = createChatLi("Thinking...", "incoming");
             chatbox.appendChild(incomingChatLi);
             chatbox.scrollTo(0, chatbox.scrollHeight);
@@ -84,14 +84,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     chatInput.addEventListener("input", () => {
-        // Adjust the height of the input textarea based on its content
         chatInput.style.height = `${inputInitHeight}px`;
         chatInput.style.height = `${chatInput.scrollHeight}px`;
     });
 
     chatInput.addEventListener("keydown", (e) => {
-        // If Enter key is pressed without Shift key and the window 
-        // width is greater than 800px, handle the chat
         if (e.key === "Enter" && !e.shiftKey && window.innerWidth > 800) {
             e.preventDefault();
             handleChat();
